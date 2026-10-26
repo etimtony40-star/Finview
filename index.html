@@ -1,0 +1,1893 @@
+<!doctype html>
+<html lang="en" data-theme="midnight-slate">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="FinView - Visual Personal Expense Tracker & Wealth Management Platform."
+    />
+    <title>
+      FinView | Visual Personal Expense & Wealth Management Dashboard
+    </title>
+
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#6366f1" />
+
+    <!-- Modern Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- Ambient background glow elements -->
+    <div class="glow-orb glow-orb-1" aria-hidden="true"></div>
+    <div class="glow-orb glow-orb-2" aria-hidden="true"></div>
+
+    <!-- PIN Lock Screen Overlay (if PIN is enabled in Settings) -->
+    <div
+      class="pin-lock-overlay hidden"
+      id="pinLockOverlay"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="pin-lock-card">
+        <div class="pin-icon-box">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h2>FinView Security Lock</h2>
+        <p>Enter your 4-digit PIN code to unlock your financial data</p>
+        <div class="pin-dots" id="pinDots">
+          <span class="dot"></span><span class="dot"></span
+          ><span class="dot"></span><span class="dot"></span>
+        </div>
+        <div class="pin-keypad">
+          <button type="button" class="pin-key" data-key="1">1</button>
+          <button type="button" class="pin-key" data-key="2">2</button>
+          <button type="button" class="pin-key" data-key="3">3</button>
+          <button type="button" class="pin-key" data-key="4">4</button>
+          <button type="button" class="pin-key" data-key="5">5</button>
+          <button type="button" class="pin-key" data-key="6">6</button>
+          <button type="button" class="pin-key" data-key="7">7</button>
+          <button type="button" class="pin-key" data-key="8">8</button>
+          <button type="button" class="pin-key" data-key="9">9</button>
+          <button type="button" class="pin-key pin-clear" id="pinClearBtn">
+            Clear
+          </button>
+          <button type="button" class="pin-key" data-key="0">0</button>
+          <button type="button" class="pin-key pin-backspace" id="pinBackBtn">
+            ⌫
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Application Wrapper -->
+    <div class="app-layout" id="mainAppLayout">
+      <!-- Top Command Center Navigation Bar -->
+      <header class="top-nav" role="banner">
+        <div class="brand-container">
+          <div class="brand-logo" aria-hidden="true">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+              <polyline points="16 7 22 7 22 13"></polyline>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title-row">
+              <span class="brand-name">FinView</span>
+              <span class="badge-tag">PRO 2026</span>
+            </div>
+            <span class="brand-sub">Visual Wealth & Budget OS</span>
+          </div>
+        </div>
+
+        <!-- Center Month Picker & Wallet Account Switcher -->
+        <div class="nav-center-controls">
+          <!-- Month Picker -->
+          <div class="month-selector-pill">
+            <button
+              type="button"
+              class="btn-month-nav"
+              id="prevMonthBtn"
+              title="Previous Month"
+            >
+              ‹
+            </button>
+            <div class="month-display" id="currentMonthDisplay">
+              October 2026
+            </div>
+            <button
+              type="button"
+              class="btn-month-nav"
+              id="nextMonthBtn"
+              title="Next Month"
+            >
+              ›
+            </button>
+            <input
+              type="month"
+              id="hiddenMonthInput"
+              class="hidden-month-input"
+              aria-label="Select custom month"
+            />
+          </div>
+
+          <!-- Wallet / Account Filter Selector -->
+          <div class="account-selector-pill">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <select
+              id="accountFilterSelect"
+              class="account-select"
+              title="Active Account / Wallet"
+            >
+              <option value="ALL">🌐 All Accounts</option>
+              <option value="bank">🏦 Checking Account</option>
+              <option value="card">💳 Credit Card</option>
+              <option value="cash">💵 Cash Wallet</option>
+              <option value="crypto">🪙 Crypto Vault</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- Privacy Mode Toggle (Eye Icon) -->
+          <button
+            type="button"
+            class="btn-icon"
+            id="togglePrivacyBtn"
+            title="Toggle Privacy Mode (Shortcut: P)"
+            aria-label="Toggle Privacy Mode"
+          >
+            <svg
+              class="icon-eye"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+
+          <!-- Command Palette Trigger (Ctrl+K) -->
+          <button
+            type="button"
+            class="btn-command-palette"
+            id="openCommandPaletteBtn"
+            title="Command Palette (Ctrl+K)"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Cmd / Ctrl+K</span>
+          </button>
+
+          <!-- Theme Switcher (6 Themes + Auto System detect) -->
+          <div class="theme-select-container">
+            <svg
+              class="theme-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <select id="themeSelect" class="theme-select" title="Switch Theme">
+              <option value="midnight-slate">🌌 Midnight Slate</option>
+              <option value="cyber-neon">⚡ Cyber Neon</option>
+              <option value="emerald-matrix">🌲 Emerald Matrix</option>
+              <option value="sunset-crimson">🌅 Sunset Crimson</option>
+              <option value="luxury-gold">👑 Obsidian Gold</option>
+              <option value="clean-light">☀️ Clean Light</option>
+              <option value="system-auto">💻 System Theme</option>
+            </select>
+          </div>
+
+          <!-- Currency Selector -->
+          <div class="currency-select-container">
+            <select
+              id="currencySelect"
+              class="currency-select"
+              title="Display Currency"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="JPY">JPY (¥)</option>
+              <option value="CAD">CAD ($)</option>
+              <option value="AUD">AUD ($)</option>
+            </select>
+          </div>
+
+          <!-- Monthly Budget Pill & Navbar Edit Button -->
+          <div class="budget-pill" id="budgetPill">
+            <div class="pill-info">
+              <span class="pill-label">Monthly Target</span>
+              <span class="pill-value metric-value" id="navBudgetValue"
+                >$0.00</span
+              >
+            </div>
+            <button
+              type="button"
+              class="btn-edit-budget"
+              id="openBudgetBtn"
+              title="Edit Budget Ceiling & Category Limits"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 20h9"></path>
+                <path
+                  d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                ></path>
+              </svg>
+              <span>Edit</span>
+            </button>
+          </div>
+
+          <!-- Settings Modal Trigger -->
+          <button
+            type="button"
+            class="btn-icon"
+            id="openSettingsBtn"
+            title="Platform Settings"
+            aria-label="Open Platform Settings"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Smart Natural Language Entry Bar -->
+      <section
+        class="nlp-bar-container"
+        aria-label="Smart Natural Language Entry"
+      >
+        <div class="nlp-input-card">
+          <div class="nlp-sparkle-icon">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"
+              ></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            id="nlpQuickInput"
+            class="nlp-input"
+            placeholder="Natural Language Smart Entry: e.g. 'Coffee 4.50 on Card', 'Salary 3200 in Bank', 'Whole Foods 85 yesterday'..."
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="btn-voice-input"
+            id="voiceInputBtn"
+            title="Voice Input (Speech-to-Text)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+              ></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
+          <button type="button" class="btn-nlp-submit" id="nlpSubmitBtn">
+            <span>Smart Add</span>
+            <kbd>↵</kbd>
+          </button>
+        </div>
+        <div class="nlp-tips" id="nlpLivePreview">
+          Tip: Type naturally or press <kbd>N</kbd> for manual form,
+          <kbd>/</kbd> to search, <kbd>P</kbd> to blur balances.
+        </div>
+      </section>
+
+      <!-- Main Viewport Content -->
+      <main class="dashboard-container" role="main">
+        <!-- Primary 4 KPI Indicator Metrics Cards -->
+        <section class="kpi-grid" aria-label="Key Performance Indicators">
+          <!-- Metric 1: Total Spent & Burn Rate -->
+          <article class="kpi-card" id="cardTotalSpent">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Outflow (Expenses)</span>
+              <div class="kpi-icon icon-rose">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="m16 8-8 8"></path>
+                  <path d="M8 8h8v8"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-body">
+              <h2 class="kpi-amount metric-value" id="totalSpentAmount">
+                $0.00
+              </h2>
+              <div class="kpi-progress-bar">
+                <div
+                  class="kpi-progress-fill"
+                  id="spentProgressFill"
+                  style="width: 0%"
+                ></div>
+              </div>
+              <div class="kpi-stats-row">
+                <span class="kpi-subtext" id="spentProgressLabel"
+                  >0% of budget spent</span
+                >
+                <span class="kpi-burn-rate metric-value" id="dailyBurnRateLabel"
+                  >Avg: $0/day</span
+                >
+              </div>
+            </div>
+          </article>
+
+          <!-- Metric 2: Total Income & Net Cashflow -->
+          <article class="kpi-card" id="cardTotalIncome">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Inflow (Income)</span>
+              <div class="kpi-icon icon-emerald">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="m8 16 8-8"></path>
+                  <path d="M16 16V8H8"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-body">
+              <h2 class="kpi-amount metric-value" id="totalIncomeAmount">
+                $0.00
+              </h2>
+              <div class="kpi-status-container">
+                <span class="status-badge badge-healthy" id="cashflowBadge"
+                  >Positive</span
+                >
+                <span class="kpi-secondary metric-value" id="netCashflowLabel"
+                  >Net: +$0.00</span
+                >
+              </div>
+            </div>
+          </article>
+
+          <!-- Metric 3: Monthly Budget Remaining & Forecast -->
+          <article class="kpi-card" id="cardBudgetRemaining">
+            <div class="kpi-header">
+              <span class="kpi-title">Monthly Budget Remaining</span>
+              <div class="kpi-icon icon-indigo">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-body">
+              <h2 class="kpi-amount metric-value" id="budgetRemainingAmount">
+                $0.00
+              </h2>
+              <div class="kpi-status-container">
+                <span class="status-badge badge-healthy" id="budgetStatusBadge"
+                  >On Track</span
+                >
+                <span
+                  class="kpi-secondary metric-value"
+                  id="projectedMonthEndLabel"
+                  >Proj: $0.00</span
+                >
+              </div>
+            </div>
+          </article>
+
+          <!-- Metric 4: Net Worth & Savings Rate -->
+          <article class="kpi-card" id="cardNetWorth">
+            <div class="kpi-header">
+              <span class="kpi-title">Net Worth & Savings Rate</span>
+              <div class="kpi-icon icon-amber">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                  ></polygon>
+                </svg>
+              </div>
+            </div>
+            <div class="kpi-body">
+              <h2 class="kpi-amount metric-value" id="netWorthAmount">$0.00</h2>
+              <div class="kpi-status-container">
+                <span class="status-badge badge-indigo" id="savingsRatioAmount"
+                  >100.0%</span
+                >
+                <span class="kpi-secondary" id="savingsRatioSubtext"
+                  >Savings Rate</span
+                >
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Multi-Wallet Accounts Bar -->
+        <section class="wallets-bar" aria-label="Accounts and Balances">
+          <div class="wallets-header">
+            <span class="wallets-title">Active Wallets & Accounts</span>
+            <button type="button" class="btn-link" id="manageAccountsBtn">
+              + Manage Wallets
+            </button>
+          </div>
+          <div class="wallets-grid" id="walletsGridContainer">
+            <!-- Dynamic Account Cards: Checking, Credit, Cash, Crypto -->
+          </div>
+        </section>
+
+        <!-- Smart Insights, Streaks & Bill Reminders Banner -->
+        <section class="smart-insights-strip" id="smartInsightsStrip">
+          <div class="insight-badge streak-badge" id="streakBadgeBox">
+            <span class="badge-icon">🔥</span>
+            <span class="badge-text" id="streakText"
+              >4-Day Budget Under Streak</span
+            >
+          </div>
+          <div class="insight-badge gamification-badge" id="financialScoreBox">
+            <span class="badge-icon">⭐</span>
+            <span class="badge-text" id="financialScoreText"
+              >Financial Health: 88/100 (Excellent)</span
+            >
+          </div>
+          <div class="insight-badge reminder-badge" id="upcomingBillsBox">
+            <span class="badge-icon">🔔</span>
+            <span class="badge-text" id="upcomingBillsText"
+              >No upcoming bills due in 7 days</span
+            >
+          </div>
+          <div class="insight-badge ai-tip-badge" id="aiTipBox">
+            <span class="badge-icon">💡</span>
+            <span class="badge-text" id="aiTipText"
+              >Tip: Your dining spend is 14% lower than last month!</span
+            >
+          </div>
+        </section>
+
+        <!-- Charts & Visual Analytics Grid (Income vs Expense + Category Breakdown) -->
+        <section class="charts-grid" aria-label="Visual Analytics">
+          <!-- Doughnut Chart: Category Percentage Breakdown & Drill-Down -->
+          <article class="dashboard-card chart-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Category Breakdown & Drill-Down</h2>
+                <p class="card-subtitle">
+                  Click any segment to filter ledger items
+                </p>
+              </div>
+              <span class="chart-summary-badge" id="categoryCountBadge"
+                >5 Categories</span
+              >
+            </div>
+            <div class="chart-canvas-wrapper doughnut-wrapper">
+              <canvas
+                id="categoryChart"
+                aria-label="Category expenditure breakdown chart"
+                role="img"
+              ></canvas>
+              <div
+                class="chart-center-metric"
+                id="doughnutCenterMetric"
+                aria-hidden="true"
+              >
+                <span class="center-title">Top Spent</span>
+                <span class="center-value" id="topCategoryValue">-</span>
+              </div>
+            </div>
+          </article>
+
+          <!-- Multi-Dataset Bar Chart: Income vs. Expenses & Month-over-Month -->
+          <article class="dashboard-card chart-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Income vs. Expense Trend</h2>
+                <p class="card-subtitle">
+                  Timeline cashflow tracking & forecast comparison
+                </p>
+              </div>
+              <div class="chart-toggle-group">
+                <button
+                  type="button"
+                  class="btn-chart-toggle active"
+                  data-chart-mode="timeline"
+                >
+                  Daily Timeline
+                </button>
+                <button
+                  type="button"
+                  class="btn-chart-toggle"
+                  data-chart-mode="mom"
+                >
+                  Month-over-Month
+                </button>
+              </div>
+            </div>
+            <div class="chart-canvas-wrapper bar-wrapper">
+              <canvas
+                id="trendsChart"
+                aria-label="Historical cashflow trends chart"
+                role="img"
+              ></canvas>
+            </div>
+          </article>
+        </section>
+
+        <!-- Heatmap Calendar & Per-Category Budget Progress -->
+        <section class="analytics-subgrid">
+          <!-- Heatmap Calendar of Daily Spending -->
+          <article class="dashboard-card heatmap-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Daily Spending Heatmap</h2>
+                <p class="card-subtitle">
+                  Color intensity reflects daily burn volume
+                </p>
+              </div>
+              <div class="heatmap-legend">
+                <span class="legend-label">Less</span>
+                <span class="heat-box heat-0"></span>
+                <span class="heat-box heat-1"></span>
+                <span class="heat-box heat-2"></span>
+                <span class="heat-box heat-3"></span>
+                <span class="legend-label">More</span>
+              </div>
+            </div>
+            <div class="calendar-heatmap-grid" id="calendarHeatmap">
+              <!-- Heatmap days generated dynamically by app.js -->
+            </div>
+          </article>
+
+          <!-- Per-Category Budgets & 80%/100% Alert Trackers -->
+          <article class="dashboard-card category-budgets-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Per-Category Budget Guardrails</h2>
+                <p class="card-subtitle">
+                  Real-time alerts at 80% and 100% threshold
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-outline btn-sm"
+                id="manageCategoryBudgetsBtn"
+              >
+                Configure Limits
+              </button>
+            </div>
+            <div class="category-budget-list" id="categoryBudgetsContainer">
+              <!-- Dynamic Category Budget Progress Bars with Alerts -->
+            </div>
+          </article>
+        </section>
+
+        <!-- Savings Goals & Recurring Subscriptions Row -->
+        <section class="analytics-subgrid">
+          <!-- Savings Goals with Target Dates -->
+          <article class="dashboard-card goals-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Savings Goals & Milestones</h2>
+                <p class="card-subtitle">
+                  Target savings with automated progress tracking
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-outline btn-sm"
+                id="addNewGoalBtn"
+              >
+                + New Goal
+              </button>
+            </div>
+            <div class="goals-container" id="goalsContainer">
+              <!-- Dynamic Goals Rendered Here -->
+            </div>
+          </article>
+
+          <!-- Recurring Subscriptions & Scheduled Auto-Post -->
+          <article class="dashboard-card recurring-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Recurring Subscriptions & Bills</h2>
+                <p class="card-subtitle">
+                  Auto-posting scheduler with due-date alerts
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-outline btn-sm"
+                id="addRecurringBtn"
+              >
+                + Add Recurring
+              </button>
+            </div>
+            <div class="recurring-list" id="recurringListContainer">
+              <!-- Dynamic Recurring Items -->
+            </div>
+          </article>
+        </section>
+
+        <!-- Core Workflows: Comprehensive Transaction Form & Interactive Ledger -->
+        <div class="core-grid">
+          <!-- Form Section: Comprehensive Transaction Logging System -->
+          <section
+            class="dashboard-card form-card"
+            aria-label="Transaction Logging Form"
+          >
+            <div class="card-header">
+              <div>
+                <h2 class="card-title" id="formHeaderTitle">Log Transaction</h2>
+                <p class="card-subtitle">
+                  Expense, Income, Split or Attachment
+                </p>
+              </div>
+              <div class="form-indicator-dot" aria-hidden="true"></div>
+            </div>
+
+            <!-- Transaction Type Toggle (Expense vs. Income) -->
+            <div class="type-toggle-container">
+              <button
+                type="button"
+                class="type-btn active"
+                id="typeExpenseBtn"
+                data-type="expense"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Expense</span>
+              </button>
+              <button
+                type="button"
+                class="type-btn"
+                id="typeIncomeBtn"
+                data-type="income"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"
+                  ></path>
+                </svg>
+                <span>Income</span>
+              </button>
+            </div>
+
+            <form id="expenseForm" class="expense-form" novalidate>
+              <input type="hidden" id="editTransactionId" value="" />
+
+              <!-- Description & Merchant -->
+              <div class="form-group">
+                <label for="expenseDescription" class="form-label"
+                  >Description / Merchant <span class="required">*</span></label
+                >
+                <div class="input-wrapper">
+                  <svg
+                    class="input-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 20h9"></path>
+                    <path
+                      d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                    ></path>
+                  </svg>
+                  <input
+                    type="text"
+                    id="expenseDescription"
+                    name="description"
+                    class="form-input"
+                    placeholder="e.g. Whole Foods Market, Monthly Salary, Netflix"
+                    required
+                    maxlength="80"
+                    autocomplete="off"
+                  />
+                </div>
+                <span class="form-error" id="descriptionError"
+                  >Please enter a valid description.</span
+                >
+              </div>
+
+              <!-- Amount (Float Validation) & Account Selector -->
+              <div class="form-row-dual">
+                <div class="form-group">
+                  <label for="expenseAmount" class="form-label"
+                    >Amount <span class="required">*</span></label
+                  >
+                  <div class="input-wrapper">
+                    <span class="input-prefix" id="formCurrencyPrefix">$</span>
+                    <input
+                      type="number"
+                      id="expenseAmount"
+                      name="amount"
+                      class="form-input input-with-prefix"
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0.01"
+                      required
+                    />
+                  </div>
+                  <span class="form-error" id="amountError"
+                    >Please enter a positive numeric amount.</span
+                  >
+                </div>
+
+                <!-- Wallet / Account -->
+                <div class="form-group">
+                  <label for="expenseAccount" class="form-label"
+                    >Wallet / Account <span class="required">*</span></label
+                  >
+                  <select
+                    id="expenseAccount"
+                    name="account"
+                    class="form-select"
+                    required
+                  >
+                    <option value="bank">🏦 Checking Account</option>
+                    <option value="card">💳 Credit Card</option>
+                    <option value="cash">💵 Cash Wallet</option>
+                    <option value="crypto">🪙 Crypto Vault</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Category & Date -->
+              <div class="form-row-dual">
+                <div class="form-group">
+                  <label for="expenseCategory" class="form-label"
+                    >Category <span class="required">*</span></label
+                  >
+                  <div class="select-wrapper">
+                    <select
+                      id="expenseCategory"
+                      name="category"
+                      class="form-select"
+                      required
+                    >
+                      <!-- Options populated dynamically from categories registry -->
+                      <option value="Food">🍔 Food & Dining</option>
+                      <option value="Rent">🏠 Rent & Housing</option>
+                      <option value="Entertainment">🎮 Entertainment</option>
+                      <option value="Utilities">💡 Utilities & Bills</option>
+                      <option value="Miscellaneous">📦 Miscellaneous</option>
+                      <option value="Salary">💰 Salary / Wages</option>
+                      <option value="Investments">📈 Investments</option>
+                      <option value="Freelance">💻 Freelance</option>
+                    </select>
+                  </div>
+                  <span class="form-error" id="categoryError"
+                    >Please select a category.</span
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="expenseDate" class="form-label"
+                    >Transaction Date <span class="required">*</span></label
+                  >
+                  <input
+                    type="date"
+                    id="expenseDate"
+                    name="date"
+                    class="form-input form-date"
+                    required
+                  />
+                  <span class="form-error" id="dateError"
+                    >Please specify a valid date.</span
+                  >
+                </div>
+              </div>
+
+              <!-- Tags & Notes -->
+              <div class="form-group">
+                <label for="expenseTags" class="form-label"
+                  >Tags (comma-separated) & Notes</label
+                >
+                <input
+                  type="text"
+                  id="expenseTags"
+                  name="tags"
+                  class="form-input"
+                  placeholder="e.g. #tax-deductible, #work, #vacation"
+                />
+              </div>
+
+              <!-- Receipt Photo Attachment Upload (Stored in IndexedDB) -->
+              <div class="form-group">
+                <label class="form-label"
+                  >Receipt Photo Attachment (IndexedDB)</label
+                >
+                <div class="receipt-dropzone" id="receiptDropzone">
+                  <input
+                    type="file"
+                    id="receiptFileInput"
+                    accept="image/*"
+                    class="receipt-file-input"
+                  />
+                  <div class="dropzone-prompt" id="dropzonePrompt">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Attach receipt image (drag or browse)</span>
+                  </div>
+                  <div
+                    class="receipt-preview-box hidden"
+                    id="receiptPreviewBox"
+                  >
+                    <img id="receiptPreviewImg" src="" alt="Receipt Preview" />
+                    <button
+                      type="button"
+                      class="btn-remove-receipt"
+                      id="removeReceiptBtn"
+                      title="Remove Attachment"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Split Transaction Option -->
+              <div class="split-toggle-box">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="splitCheckbox" />
+                  <span>Split transaction into multiple categories</span>
+                </label>
+              </div>
+
+              <div
+                class="split-items-container hidden"
+                id="splitItemsContainer"
+              >
+                <div class="split-row">
+                  <input
+                    type="text"
+                    class="form-input split-desc"
+                    placeholder="Split 1 description"
+                    value="Base Item"
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-input split-amt"
+                    placeholder="Amount"
+                  />
+                  <select class="form-select split-cat">
+                    <option value="Food">Food</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Miscellaneous">Misc</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Submit Button & Cancel Edit Button -->
+              <div class="form-actions-row">
+                <button
+                  type="button"
+                  class="btn-ghost hidden"
+                  id="cancelEditBtn"
+                >
+                  Cancel Edit
+                </button>
+                <button type="submit" class="btn-primary" id="addExpenseBtn">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span id="submitBtnText">Record Transaction</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Transaction Ledger, Advanced Filters, Bulk Selection & Data Tools -->
+          <section
+            class="dashboard-card ledger-card"
+            aria-label="Transaction Ledger"
+          >
+            <div class="card-header ledger-header">
+              <div>
+                <h2 class="card-title">Transaction Ledger</h2>
+                <p class="card-subtitle">
+                  Search, filter, bulk manage, and edit history
+                </p>
+              </div>
+
+              <!-- Export & Import Action Buttons -->
+              <div class="ledger-top-tools">
+                <button
+                  type="button"
+                  class="btn-tool"
+                  id="exportCsvBtn"
+                  title="Export to CSV"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>CSV</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-tool"
+                  id="exportJsonBtn"
+                  title="Backup Full JSON"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    ></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                  <span>JSON</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-tool"
+                  id="importCsvBtn"
+                  title="Import from Bank Statement (CSV)"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span>Import</span>
+                </button>
+                <button
+                  type="button"
+                  class="btn-tool"
+                  id="printReportBtn"
+                  title="Generate Printable PDF Monthly Report"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path
+                      d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                    ></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  <span>Report</span>
+                </button>
+                <div class="ledger-summary-chip">
+                  <span id="ledgerVisibleCount">0</span> records (<span
+                    class="metric-value"
+                    id="ledgerVisibleTotal"
+                    >$0.00</span
+                  >)
+                </div>
+              </div>
+            </div>
+
+            <!-- Multi-attribute Filtering & Sorting Bar -->
+            <div class="ledger-filter-bar">
+              <!-- Category Filter -->
+              <div class="filter-control">
+                <label for="filterCategory" class="filter-label"
+                  >Category</label
+                >
+                <select id="filterCategory" class="filter-select">
+                  <option value="ALL">All Categories</option>
+                  <option value="Food">Food</option>
+                  <option value="Rent">Rent</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Miscellaneous">Miscellaneous</option>
+                  <option value="Salary">Salary</option>
+                  <option value="Investments">Investments</option>
+                  <option value="Freelance">Freelance</option>
+                </select>
+              </div>
+
+              <!-- Type Filter (All, Expense, Income) -->
+              <div class="filter-control">
+                <label for="filterType" class="filter-label">Type</label>
+                <select id="filterType" class="filter-select">
+                  <option value="ALL">All Types</option>
+                  <option value="expense">Outflow (Expense)</option>
+                  <option value="income">Inflow (Income)</option>
+                </select>
+              </div>
+
+              <!-- Chronological & Cost Sorting -->
+              <div class="filter-control">
+                <label for="sortOrder" class="filter-label">Sort By</label>
+                <select id="sortOrder" class="filter-select">
+                  <option value="date-desc">Date: Newest First</option>
+                  <option value="date-asc">Date: Oldest First</option>
+                  <option value="amount-desc">Amount: High to Low</option>
+                  <option value="amount-asc">Amount: Low to High</option>
+                </select>
+              </div>
+
+              <!-- Live Text Search -->
+              <div class="filter-control search-control">
+                <label for="searchFilter" class="filter-label">Search</label>
+                <div class="search-input-wrapper">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input
+                    type="text"
+                    id="searchFilter"
+                    class="search-input"
+                    placeholder="Search description, tag, notes (/)..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Bulk Selection Actions Toolbar (Hidden until at least one item selected) -->
+            <div class="bulk-actions-toolbar hidden" id="bulkActionsToolbar">
+              <span class="bulk-selected-label"
+                ><span id="bulkSelectedCount">0</span> selected</span
+              >
+              <div class="bulk-buttons">
+                <select id="bulkRecategorizeSelect" class="filter-select">
+                  <option value="" disabled selected>
+                    Re-categorize as...
+                  </option>
+                  <option value="Food">Food</option>
+                  <option value="Rent">Rent</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Miscellaneous">Miscellaneous</option>
+                </select>
+                <button
+                  type="button"
+                  class="btn-bulk-delete"
+                  id="bulkDeleteBtn"
+                >
+                  Delete Selected
+                </button>
+              </div>
+            </div>
+
+            <!-- Scrollable Table / List Container -->
+            <div class="ledger-table-container">
+              <table class="ledger-table" id="ledgerTable">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-checkbox">
+                      <input
+                        type="checkbox"
+                        id="selectAllCheckbox"
+                        title="Select All"
+                      />
+                    </th>
+                    <th scope="col" class="th-date">Date</th>
+                    <th scope="col" class="th-category">Category</th>
+                    <th scope="col" class="th-account">Wallet</th>
+                    <th scope="col" class="th-desc">Description & Tags</th>
+                    <th scope="col" class="th-amount">Amount</th>
+                    <th scope="col" class="th-receipt">Receipt</th>
+                    <th scope="col" class="th-action">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ledgerTableBody">
+                  <!-- Transaction rows dynamically injected via app.js -->
+                </tbody>
+              </table>
+
+              <!-- Empty State Display -->
+              <div class="ledger-empty-state" id="ledgerEmptyState">
+                <div class="empty-icon-box">
+                  <svg
+                    width="36"
+                    height="36"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                  </svg>
+                </div>
+                <h3 class="empty-title">
+                  No transactions recorded for this period
+                </h3>
+                <p class="empty-description">
+                  Record an expense or income item, or import a bank statement
+                  CSV.
+                </p>
+              </div>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="pagination-bar" id="paginationBar">
+              <div class="pagination-info">
+                Showing <span id="pageStart">1</span>-<span id="pageEnd"
+                  >10</span
+                >
+                of <span id="pageTotal">10</span>
+              </div>
+              <div class="pagination-controls">
+                <button type="button" class="btn-page" id="prevPageBtn">
+                  ‹ Prev
+                </button>
+                <span class="current-page-num" id="currentPageNum">1</span>
+                <button type="button" class="btn-page" id="nextPageBtn">
+                  Next ›
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- ==========================================================================
+       MODALS SECTION
+       ========================================================================== -->
+
+    <!-- 1. Budget Setup & Edit Modal -->
+    <div
+      class="modal-backdrop modal-overlay hidden"
+      id="budgetModalBackdrop"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <div class="modal-badge-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </div>
+          <div class="modal-header-text">
+            <h2 class="modal-title" id="modalTitle">
+              Set Your Monthly Budget Target
+            </h2>
+            <p class="modal-subtitle">
+              Choose a quick savings target or specify a custom spending
+              ceiling.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="modal-close-btn"
+            id="closeBudgetModalBtn"
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form id="budgetForm" class="modal-form" novalidate>
+          <div class="preset-container">
+            <span class="preset-label">Quick Select Suggestions:</span>
+            <div class="suggestion-grid" id="suggestionGrid">
+              <button type="button" class="suggestion-btn" data-preset="250">
+                $250
+              </button>
+              <button type="button" class="suggestion-btn" data-preset="500">
+                $500
+              </button>
+              <button type="button" class="suggestion-btn" data-preset="1000">
+                $1000
+              </button>
+              <button type="button" class="suggestion-btn" data-preset="2500">
+                $2500
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group custom-budget-group">
+            <label for="monthlyBudgetInput" class="form-label"
+              >Or Enter Custom Budget ($) <span class="required">*</span></label
+            >
+            <div class="input-wrapper">
+              <span class="input-prefix">$</span>
+              <input
+                type="number"
+                id="monthlyBudgetInput"
+                class="form-input input-with-prefix"
+                placeholder="e.g. 1000.00"
+                step="0.01"
+                min="0.01"
+                required
+              />
+            </div>
+            <span class="form-error" id="budgetInputError"
+              >Please enter a valid positive budget amount.</span
+            >
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-ghost" id="cancelBudgetBtn">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" id="saveBudgetBtn">
+              Save & Apply Budget
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. Command Palette Modal (Ctrl+K) -->
+    <div
+      class="modal-backdrop hidden"
+      id="commandPaletteModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="command-palette-card">
+        <div class="command-search-row">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="commandPaletteInput"
+            placeholder="Type a command or search actions..."
+            autocomplete="off"
+          />
+          <kbd>ESC</kbd>
+        </div>
+        <div class="command-list" id="commandList">
+          <!-- Dynamically rendered commands -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. CSV Import & Column Mapping Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="csvImportModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Import Bank Statement (CSV)</h2>
+          <button type="button" class="modal-close-btn" id="closeCsvModalBtn">
+            ✕
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-subtitle">
+            Upload your CSV bank statement and map columns for instant
+            ingestion.
+          </p>
+          <input
+            type="file"
+            id="csvFileInput"
+            accept=".csv"
+            class="form-input"
+            style="padding-top: 0.6rem; margin: 1rem 0"
+          />
+          <div id="csvMappingContainer" class="hidden">
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.85rem">
+              Column Mapping
+            </h4>
+            <div class="form-row-dual">
+              <div class="form-group">
+                <label class="form-label">Date Column</label>
+                <select id="mapDateCol" class="form-select"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description Column</label>
+                <select id="mapDescCol" class="form-select"></select>
+              </div>
+            </div>
+            <div class="form-row-dual">
+              <div class="form-group">
+                <label class="form-label">Amount Column</label>
+                <select id="mapAmountCol" class="form-select"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category Column (Optional)</label>
+                <select id="mapCategoryCol" class="form-select"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" id="cancelCsvBtn">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            id="executeCsvImportBtn"
+            disabled
+          >
+            Process Import
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Savings Goal Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="goalModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Create Savings Goal</h2>
+          <button type="button" class="modal-close-btn" id="closeGoalModalBtn">
+            ✕
+          </button>
+        </div>
+        <form id="goalForm">
+          <div class="form-group">
+            <label class="form-label">Goal Name</label>
+            <input
+              type="text"
+              id="goalNameInput"
+              class="form-input"
+              placeholder="e.g. Emergency Fund, New Car, Vacation"
+              required
+            />
+          </div>
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label class="form-label">Target Amount ($)</label>
+              <input
+                type="number"
+                id="goalTargetInput"
+                class="form-input"
+                placeholder="5000"
+                step="10"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Saved ($)</label>
+              <input
+                type="number"
+                id="goalCurrentInput"
+                class="form-input"
+                placeholder="1200"
+                step="10"
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Completion Date</label>
+            <input
+              type="date"
+              id="goalDateInput"
+              class="form-input form-date"
+              required
+            />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-ghost" id="cancelGoalBtn">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Save Goal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 5. Recurring Subscriptions Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="recurringModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Add Recurring Expense / Income</h2>
+          <button
+            type="button"
+            class="modal-close-btn"
+            id="closeRecurringModalBtn"
+          >
+            ✕
+          </button>
+        </div>
+        <form id="recurringForm">
+          <div class="form-group">
+            <label class="form-label">Title / Service</label>
+            <input
+              type="text"
+              id="recTitleInput"
+              class="form-input"
+              placeholder="e.g. Netflix, Gym, Apartment Rent"
+              required
+            />
+          </div>
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label class="form-label">Amount ($)</label>
+              <input
+                type="number"
+                id="recAmountInput"
+                class="form-input"
+                placeholder="15.99"
+                step="0.01"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select id="recFrequencySelect" class="form-select">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="recCategorySelect" class="form-select">
+                <option value="Entertainment">Entertainment</option>
+                <option value="Rent">Rent</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Food">Food</option>
+                <option value="Miscellaneous">Misc</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Next Due Date</label>
+              <input
+                type="date"
+                id="recDueDateInput"
+                class="form-input form-date"
+                required
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-ghost" id="cancelRecBtn">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">Add Subscription</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 6. Receipt Image Viewer Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="receiptModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card receipt-modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Attached Receipt Proof</h2>
+          <button
+            type="button"
+            class="modal-close-btn"
+            id="closeReceiptModalBtn"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="receipt-full-display">
+          <img id="receiptFullImage" src="" alt="Full Receipt View" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Platform Settings Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="settingsModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Platform & Privacy Settings</h2>
+          <button
+            type="button"
+            class="modal-close-btn"
+            id="closeSettingsModalBtn"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="settings-body">
+          <div class="settings-section">
+            <h4>Security & PIN Lock</h4>
+            <p class="settings-desc">
+              Require a 4-digit PIN code upon opening FinView.
+            </p>
+            <div class="form-row-dual" style="margin-top: 0.5rem">
+              <input
+                type="password"
+                id="setPinInput"
+                maxlength="4"
+                class="form-input"
+                placeholder="Set 4-digit PIN (blank to disable)"
+              />
+              <button type="button" class="btn-outline" id="savePinBtn">
+                Save PIN
+              </button>
+            </div>
+          </div>
+          <div class="settings-section" style="margin-top: 1.25rem">
+            <h4>Backup & Restore Engine</h4>
+            <p class="settings-desc">
+              Download a complete snapshot of transactions, categories, and
+              goals.
+            </p>
+            <div
+              class="settings-backup-row"
+              style="margin-top: 0.5rem; display: flex; gap: 0.75rem"
+            >
+              <button type="button" class="btn-primary" id="downloadBackupBtn">
+                Download Backup
+              </button>
+              <label
+                class="btn-outline"
+                style="
+                  cursor: pointer;
+                  display: inline-flex;
+                  align-items: center;
+                "
+              >
+                <span>Restore Backup</span>
+                <input
+                  type="file"
+                  id="restoreBackupInput"
+                  accept=".json"
+                  class="hidden"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. First-Time Onboarding Tour Modal -->
+    <div
+      class="modal-backdrop hidden"
+      id="onboardingModal"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="modal-content modal-card onboarding-card">
+        <div class="onboarding-step" id="onboardingContent">
+          <div class="modal-badge-icon" style="margin: 0 auto 1rem auto">
+            🚀
+          </div>
+          <h2 class="modal-title" style="text-align: center">
+            Welcome to FinView PRO
+          </h2>
+          <p
+            class="modal-subtitle"
+            style="text-align: center; margin-top: 0.5rem"
+          >
+            Your visual personal expense tracker, wealth management system, and
+            smart financial operating platform.
+          </p>
+          <ul class="onboarding-features-list">
+            <li>
+              ✨ <strong>Smart Natural Language:</strong> Type "Coffee 4.50" or
+              use voice input.
+            </li>
+            <li>
+              🛡️ <strong>Per-Category Guardrails:</strong> Automatic alerts at
+              80% & 100% budget thresholds.
+            </li>
+            <li>
+              🏦 <strong>Multi-Wallet Architecture:</strong> Track Cash,
+              Checking, Cards, and Crypto.
+            </li>
+            <li>
+              ⌨️ <strong>Power Shortcuts:</strong> Press <kbd>Ctrl+K</kbd> for
+              the Command Palette, <kbd>P</kbd> for Privacy.
+            </li>
+          </ul>
+          <div
+            class="modal-footer"
+            style="justify-content: center; margin-top: 1.5rem"
+          >
+            <button type="button" class="btn-primary" id="dismissOnboardingBtn">
+              Explore Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Micro-Interactions Container -->
+    <div
+      class="toast-container"
+      id="toastContainer"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <!-- Application Logic -->
+
+    <script src="script.js"></script>
+    <script src="second.js"></script>
+  </body>
+</html>
